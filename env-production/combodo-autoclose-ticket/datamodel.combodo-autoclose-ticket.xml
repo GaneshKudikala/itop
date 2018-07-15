@@ -1,0 +1,509 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<itop_design xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.3">
+    <classes>
+        <class id="ClosingRule" _delta="define">
+            <parent>cmdbAbstractObject</parent>
+            <properties>
+                <category>bizmodel,searchable</category>
+                <abstract>false</abstract>
+                <db_table>closingrule</db_table>
+                <naming>
+                    <attributes>
+                        <attribute id="name"/>
+                    </attributes>
+                </naming>
+                <reconciliation>
+                    <attributes>
+                        <attribute id="target_class"/>
+                    </attributes>
+                </reconciliation>
+            </properties>
+            <fields>
+                <field id="name" xsi:type="AttributeString">
+                    <sql>name</sql>
+                    <default_value/>
+                    <is_null_allowed>false</is_null_allowed>
+                </field>
+                <field id="target_class" xsi:type="AttributeString">
+                    <sql>target_class</sql>
+                    <default_value/>
+                    <is_null_allowed>false</is_null_allowed>
+                </field>
+                <field id="stimulus_code" xsi:type="AttributeString">
+                    <sql>stimulus_code</sql>
+                    <default_value/>
+                    <is_null_allowed>false</is_null_allowed>
+                </field>
+                <field id="history_entry" xsi:type="AttributeString">
+                    <sql>history_entry</sql>
+                    <default_value/>
+                    <is_null_allowed>true</is_null_allowed>
+                </field>
+                <field id="status" xsi:type="AttributeEnum">
+                    <values>
+                        <value id="active">active</value>
+                        <value id="inactive">inactive</value>
+                    </values>
+                    <sql>status</sql>
+                    <default_value>active</default_value>
+                    <is_null_allowed>false</is_null_allowed>
+                    <display_style>list</display_style>
+                </field>
+                <field id="type" xsi:type="AttributeEnum">
+                    <values>
+                        <value id="simple">simple</value>
+                        <value id="advanced">advanced</value>
+                    </values>
+                    <dependencies>
+                        <attribute id="pre_closing_state_code"/>
+                        <attribute id="date_to_check_att"/>
+                        <attribute id="autoclose_delay"/>
+                        <attribute id="oql_scope"/>
+                    </dependencies>
+                    <sql>type</sql>
+                    <default_value>simple</default_value>
+                    <is_null_allowed>false</is_null_allowed>
+                </field>
+                <field id="pre_closing_state_code" xsi:type="AttributeString">
+                    <sql>pre_closing_state_code</sql>
+                    <default_value/>
+                    <is_null_allowed>true</is_null_allowed>
+                </field>
+                <field id="date_to_check_att" xsi:type="AttributeString">
+                    <sql>date_to_check_att</sql>
+                    <default_value/>
+                    <is_null_allowed>true</is_null_allowed>
+                </field>
+                <field id="autoclose_delay" xsi:type="AttributeInteger">
+                    <sql>autoclose_delay</sql>
+                    <default_value/>
+                    <is_null_allowed>true</is_null_allowed>
+                </field>
+                <field id="oql_scope" xsi:type="AttributeOQL">
+                    <sql>oql_scope</sql>
+                    <default_value/>
+                    <is_null_allowed>true</is_null_allowed>
+                </field>
+            </fields>
+            <methods>
+                <method id="GetInitialStateAttributeFlags">
+                    <static>false</static>
+                    <access>public</access>
+                    <type>Overload-DBObject</type>
+                    <code><![CDATA[	public function GetInitialStateAttributeFlags($sAttCode, &$aReasons = array())
+	{
+		if ($sAttCode == 'type')
+		{
+		    return OPT_ATT_READONLY;
+		}
+		return parent::GetInitialStateAttributeFlags($sAttCode, $aReasons);
+	}
+]]></code>
+                </method>
+                <method id="GetAttributeFlags">
+                    <static>false</static>
+                    <access>public</access>
+                    <type>Overload-DBObject</type>
+                    <code><![CDATA[	public function GetAttributeFlags($sAttCode, &$aReasons = array(), $sTargetState = '')
+	{
+		if ($sAttCode == 'type')
+		{
+		    return OPT_ATT_READONLY;
+		}
+		return parent::GetAttributeFlags($sAttCode, $aReasons, $sTargetState);
+	}
+]]></code>
+                </method>
+                <method id="ComputeValues">
+                    <static>false</static>
+                    <access>public</access>
+                    <type>Overload-DBObject</type>
+                    <code><![CDATA[	public function ComputeValues()
+	{
+		// Compute the type of the rule
+		$oAttDef = MetaModel::GetAttributeDef(get_class($this), 'oql_scope');
+		$sType = ($oAttDef->IsNull($this->Get('oql_scope'))) ? 'simple' : 'advanced';
+
+		$this->Set('type', $sType);
+
+		return parent::ComputeValues();
+	}]]></code>
+                </method>
+                <method id="DoCheckToWrite">
+                    <static>false</static>
+                    <access>public </access>
+                    <code><![CDATA[    public function DoCheckToWrite()
+	{
+		parent::DoCheckToWrite();
+
+		// Checking class / attributes consistency with Datamodel
+		$sClass = $this->Get('target_class');
+		$sStimulusCode = $this->Get('stimulus_code');
+		$sPreClosingStateCode = $this->Get('pre_closing_state_code');
+		$sDateToCheckAttCode = $this->Get('date_to_check_att');
+		$sOqlScope = $this->Get('oql_scope');
+		// - Class
+		if(!MetaModel::IsValidClass($sClass))
+		{
+		    $this->m_aCheckIssues[] = Dict::Format('Class:ClosingRule/Error:ClassNotValid', $sClass);
+		}
+		// - Preclosing state code attribute
+		$aStates = MetaModel::EnumStates($sClass);
+		if(!empty($sPreClosingStateCode) && !array_key_exists($sPreClosingStateCode, $aStates))
+		{
+			$this->m_aCheckIssues[] = Dict::Format('Class:ClosingRule/Error:StateNotValid', $sClass, $sPreClosingStateCode);
+		}
+		// - Date to check attribute
+		if(!empty($sDateToCheckAttCode))
+		{
+            if(!MetaModel::IsValidAttCode($sClass, $sDateToCheckAttCode))
+            {
+                $this->m_aCheckIssues[] = Dict::Format('Class:ClosingRule/Error:AttributeNotValid', $sClass, $sDateToCheckAttCode);
+            }
+            else
+            {
+                $oAttDef = MetaModel::GetAttributeDef($sClass, $sDateToCheckAttCode);
+                if(($oAttDef instanceof AttributeDateTime) === false)
+                {
+                    $this->m_aCheckIssues[] = Dict::Format('Class:ClosingRule/Error:AttributeMustBeDate', $sClass, $sDateToCheckAttCode);
+                }
+            }
+        }
+
+		// Checking option consistency
+		// - At least one option must be filled (either simple or advanced)
+		$bNoOptionFilled = true;
+		$aOptionAttCodes = array('pre_closing_state_code', 'date_to_check_att', 'autoclose_delay', 'oql_scope');
+		foreach($aOptionAttCodes as $sOptionAttCode)
+		{
+			$oAttDef = MetaModel::GetAttributeDef(get_class($this), $sOptionAttCode);
+			$value = $this->Get($sOptionAttCode);
+			if(!$oAttDef->IsNull($value))
+			{
+				$bNoOptionFilled = false;
+				break;
+			}
+		}
+
+		if($bNoOptionFilled)
+		{
+			$this->m_aCheckIssues[] = Dict::Format('Class:ClosingRule/Error:NoOptionFilled');
+		}
+		// - Checking that option 1 is valid if selected
+		elseif(empty($sOqlScope))
+		{
+			$bOptionOneValid = true;
+
+			// Removing OQL attribute as we only test option 1 attributes
+			array_pop($aOptionAttCodes);
+			foreach($aOptionAttCodes as $sOptionAttCode)
+			{
+				$oAttDef = MetaModel::GetAttributeDef(get_class($this), $sOptionAttCode);
+				$value = $this->Get($sOptionAttCode);
+				if($oAttDef->IsNull($value))
+				{
+					$bOptionOneValid = false;
+					break;
+				}
+			}
+
+			if(!$bOptionOneValid)
+			{
+				$this->m_aCheckIssues[] = Dict::Format('Class:ClosingRule/Error:OptionOneMissingField');
+			}
+			// Checking that stimulus is valid for defined state (cannot be checked for an OQL as we don't know in which state will be the returned objects.
+			else
+			{
+				$aStimuli = MetaModel::EnumStimuli($sClass);
+				if(!array_key_exists($sStimulusCode, $aStimuli))
+				{
+					$this->m_aCheckIssues[] = Dict::Format('Class:ClosingRule/Error:StimulusNotValid', $sClass, $sStimulusCode);
+				}
+			}
+		}
+		// - Checking that option 2 OQL is about the right class
+		elseif(!empty($sOqlScope))
+		{
+		    try
+		    {
+		        $oSearch = DBObjectSearch::FromOQL($sOqlScope);
+		        $sOqlClass = $oSearch->GetClass();
+			    if($sOqlClass !== $sClass)
+			    {
+				    $this->m_aCheckIssues[] = Dict::Format('Class:StateRule/Error:OQLClassDontMatch', $sClass, $sOqlClass);
+			    }
+		    }
+		    catch(Exception $e)
+		    {
+		        $this->m_aCheckIssues[] = Dict::Format('Class:StateRule/Error:OQLNotValid', $e->getMessage());
+		    }
+		}
+
+		// Checking that there not already a closing rule for this class
+		$oSearch = DBObjectSearch::FromOQL('SELECT ClosingRule WHERE target_class = :target_class AND id != :id');
+		$oSet = new DBObjectSet($oSearch, array(), array('target_class' => $sClass, 'id' => $this->GetKey()));
+		if($oSet->Count() > 0)
+		{
+			$this->m_aCheckIssues[] = Dict::Format('Class:ClosingRule/Error:ExistingRuleForClass', $sClass);
+		}
+	}]]></code>
+                </method>
+                <method id="GetFilter">
+                    <static>false</static>
+                    <access>public</access>
+                    <type>Overload-DBObject</type>
+                    <code><![CDATA[	/**
+    * @return DBObjectSearch
+    */
+    public function GetFilter()
+	{
+		if($this->Get('type') === 'advanced')
+		{
+		    $oSearch = DBObjectSearch::FromOQL($this->Get('oql_scope'));
+
+            // Restrict OQL to states in which the stimulus is available
+			if ($this->Get('type') === 'advanced')
+			{
+				$sClass = $this->Get('target_class');
+				$aAvailableStatesCodes = $this->GetAvailableStatesForStimulus($sClass, $this->Get('stimulus_code'));
+
+				$oSearch->AddConditionExpression(
+					new BinaryExpression(
+						new FieldExpression(MetaModel::GetStateAttributeCode($sClass), $oSearch->GetClassAlias()),
+						'IN',
+						ListExpression::FromScalars($aAvailableStatesCodes)
+					)
+				);
+			}
+        }
+        else
+        {
+            $sClass = $this->Get('target_class');
+            $sStateAttCode = MetaModel::GetStateAttributeCode($sClass);
+            $sDateAttCode = $this->Get('date_to_check_att');
+
+            $oSearch = DBObjectSearch::FromOQL('SELECT '.$sClass.' WHERE '.$sStateAttCode.' = :pre_closing_state_code AND '.$sDateAttCode.' <= DATE_SUB(NOW(), INTERVAL :autoclose_delay DAY)');
+            $oSearch->SetInternalParams(
+            	array(
+            		'pre_closing_state_code' => $this->Get('pre_closing_state_code'),
+		            'autoclose_delay' => $this->Get('autoclose_delay'),
+	            )
+            );
+        }
+
+        return $oSearch;
+	}]]></code>
+                </method>
+                <method id="DisplayBareRelations">
+                    <static>false</static>
+                    <access>public</access>
+                    <type>Overload-DBObject</type>
+                    <code><![CDATA[	/**
+	 * @param \WebPage $oPage
+	 * @param bool $bEditMode
+	 */
+	public function DisplayBareRelations(WebPage $oPage, $bEditMode = false)
+	{
+		parent::DisplayBareRelations($oPage, $bEditMode);
+
+		if(!$bEditMode)
+		{
+			$oPage->SetCurrentTab(Dict::S('UI:AutocloseTicket:Preview'));
+			$this->OnShowPreview($oPage);
+		}
+	}]]></code>
+                </method>
+                <method id="OnShowPreview">
+                    <static>false</static>
+                    <access>protected</access>
+                    <type>Overload-DBObject</type>
+                    <code><![CDATA[/**
+	 * @param \WebPage $oPage
+	 */
+	public function OnShowPreview(WebPage $oPage)
+	{
+		$sClass = $this->Get('target_class');
+		$sStimulusCode = $this->Get('stimulus_code');
+
+		$oPage->p(MetaModel::GetClassIcon($sClass)."&nbsp;".Dict::Format('UI:AutocloseTicket:Title', MetaModel::GetName($sClass)));
+
+		// Display a notice about the OQL being restricted when in advanced type
+		if($this->Get('type') === 'advanced')
+		{
+			$aStatesCodes = $this->GetAvailableStatesForStimulus($sClass, $sStimulusCode);
+			$aStates = array();
+			foreach($aStatesCodes as $sStateCode)
+			{
+				$aStates[] = MetaModel::GetStateLabel($sClass, $sStateCode);
+			}
+
+			$sNoticeText = Dict::Format('UI:AutocloseTicket:AdvancedTypeStatesNotice', $sStimulusCode, implode(', ', $aStates));
+			$oPage->add('<div class="header_message message_info">'.$sNoticeText.'</div>');
+		}
+
+		$aParams = array(
+			'menu' => true,
+			'table_id' => 'AutoCloseTicket_preview_rule_'.$this->GetKey(),
+		);
+		$oBlock = new DisplayBlock($this->GetFilter(), 'list', true, $aParams);
+		$oBlock->Display($oPage, 'rel_preview_rule_'.$this->GetKey(), $aParams);
+	}]]></code>
+                </method>
+                <method id="GetAvailableStatesForStimulus">
+                    <static>true</static>
+                    <access>public</access>
+                    <type>Overload-DBObject</type>
+                    <code><![CDATA[	/**
+	 * Note: This should be refactor into MetaModel but as this extension i supposed to be iTop 2.3 compatible we can't yet.
+	 *
+	 * @param string $sClass
+	 * @param string $sStimulusCode
+	 *
+	 * @return array
+	 */
+	static public function GetAvailableStatesForStimulus($sClass, $sStimulusCode)
+	{
+		$aAvailableStatesCodes = array();
+		foreach(MetaModel::EnumStates($sClass) as $sStateCode => $aState)
+		{
+			$aTransitions = MetaModel::EnumTransitions($sClass, $sStateCode);
+			if (array_key_exists($sStimulusCode, $aTransitions))
+			{
+				$aAvailableStatesCodes[] = $sStateCode;
+			}
+		}
+
+		return $aAvailableStatesCodes;
+	}]]></code>
+                </method>
+        </methods>
+            <presentation>
+                <list>
+                    <items>
+                        <item id="target_class">
+                            <rank>10</rank>
+                        </item>
+                        <item id="name">
+                            <rank>20</rank>
+                        </item>
+                        <item id="stimulus_code">
+                            <rank>30</rank>
+                        </item>
+                        <item id="status">
+                            <rank>40</rank>
+                        </item>
+                        <item id="type">
+                            <rank>50</rank>
+                        </item>
+                    </items>
+                </list>
+                <search>
+                    <items>
+                        <item id="name">
+                            <rank>10</rank>
+                        </item>
+                        <item id="target_class">
+                            <rank>20</rank>
+                        </item>
+                        <item id="status">
+                            <rank>30</rank>
+                        </item>
+                        <item id="type">
+                            <rank>40</rank>
+                        </item>
+                        <item id="stimulus_code">
+                            <rank>50</rank>
+                        </item>
+                        <item id="history_entry">
+                            <rank>60</rank>
+                        </item>
+                        <item id="pre_closing_state_code">
+                            <rank>70</rank>
+                        </item>
+                        <item id="date_to_check_att">
+                            <rank>80</rank>
+                        </item>
+                        <item id="autoclose_delay">
+                            <rank>90</rank>
+                        </item>
+                        <item id="oql_scope">
+                            <rank>100</rank>
+                        </item>
+                    </items>
+                </search>
+                <details>
+                    <items>
+                        <item id="col:col0">
+                            <rank>10</rank>
+                            <items>
+                                <item id="fieldset:ClosingRule:general">
+                                    <rank>10</rank>
+                                    <items>
+                                        <item id="name">
+                                            <rank>10</rank>
+                                        </item>
+                                        <item id="target_class">
+                                            <rank>20</rank>
+                                        </item>
+                                        <item id="stimulus_code">
+                                            <rank>30</rank>
+                                        </item>
+                                        <item id="history_entry">
+                                            <rank>40</rank>
+                                        </item>
+                                        <item id="status">
+                                            <rank>50</rank>
+                                        </item>
+                                        <item id="type">
+                                            <rank>60</rank>
+                                        </item>
+                                    </items>
+                                </item>
+                            </items>
+                        </item>
+                        <item id="col:col1">
+                            <rank>20</rank>
+                            <items>
+                                <item id="fieldset:ClosingRule:simple">
+                                    <rank>10</rank>
+                                    <items>
+                                        <item id="pre_closing_state_code">
+                                            <rank>10</rank>
+                                        </item>
+                                        <item id="date_to_check_att">
+                                            <rank>20</rank>
+                                        </item>
+                                        <item id="autoclose_delay">
+                                            <rank>30</rank>
+                                        </item>
+                                    </items>
+                                </item>
+                            </items>
+                        </item>
+                        <item id="col:col2">
+                            <rank>30</rank>
+                            <items>
+                                <item id="fieldset:ClosingRule:advanced">
+                                    <rank>100</rank>
+                                    <items>
+                                        <item id="oql_scope">
+                                            <rank>10</rank>
+                                        </item>
+                                    </items>
+                                </item>
+                            </items>
+                        </item>
+                    </items>
+                </details>
+            </presentation>
+        </class>
+    </classes>
+    <menus>
+        <menu xsi:type="OQLMenuNode" id="ClosingRule" _delta="define">
+            <parent>ServiceManagement</parent>
+            <rank>16</rank>
+            <oql>SELECT ClosingRule</oql>
+            <do_search>1</do_search>
+        </menu>
+    </menus>
+</itop_design>

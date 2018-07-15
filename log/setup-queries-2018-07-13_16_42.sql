@@ -1,0 +1,1 @@
+CREATE TABLE `priv_trigger_onlogupdate` (`id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, `target_log` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'public_log') ENGINE = innodb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
