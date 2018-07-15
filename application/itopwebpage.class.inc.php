@@ -1062,7 +1062,7 @@ EOF;
             $sHtml .= '<!-- Beginning of the left pane -->';
             $sHtml .= ' <div class="ui-layout-north">';
             $sHtml .= ' <div id="header-logo">';
-            $sHtml .= ' <div id="top-left"></div><div id="logo"><a href="' . htmlentities($sIconUrl, ENT_QUOTES, 'UTF-8') . '"><img src="' . $sDisplayIcon . '" title="' . htmlentities($sVersionString, ENT_QUOTES, 'UTF-8') . '" style="border:0; margin-top:16px; margin-right:40px;"/></a></div>';
+            $sHtml .= ' <div id="top-left"></div><div id="logo"><a href="' . htmlentities($sIconUrl, ENT_QUOTES, 'UTF-8') . '"><img src="' . $sDisplayIcon . '" title="' . htmlentities($sVersionString, ENT_QUOTES, 'UTF-8') . '" style="border:0; margin-top:16px; margin-right:40px;width:55px;height:55px"/></a></div>';
             $sHtml .= ' </div>';
             $sHtml .= ' <div class="header-menu">';
             if (!MetaModel::GetConfig()->Get('demo_mode')) {
@@ -1080,7 +1080,7 @@ EOF;
             $sHtml .= '			</div>';
             $sHtml .= '		</div> <!-- /inner menu -->';
             $sHtml .= ' </div> <!-- /menu -->';
-            $sHtml .= ' <div class="footer ui-layout-south"><div id="combodo_logo"><a href="http://www.combodo.com" title="www.combodo.com" target="_blank"><img src="../images/logo-combodo.png?t=' . utils::GetCacheBusterTimestamp() . '"/></a></div></div>';
+            $sHtml .= ' <div class="footer ui-layout-south"><div id="combodo_logo"><a href="https://www.azatec.com" title="www.azatec.com" target="_blank"><img src="../images/logo-combodo.png?t=' . utils::GetCacheBusterTimestamp() . '" style="width:180px;height:60px"/></a></div></div>';
             $sHtml .= '<!-- End of the left pane -->';
             $sHtml .= '</div>';
 

@@ -103,7 +103,7 @@ class LoginWebPage extends NiceWebPage
 		{
 			$sDisplayIcon = utils::GetAbsoluteUrlModulesRoot().'branding/'.$sBrandingLogo.'?t='.utils::GetCacheBusterTimestamp();
 		}
-		$this->add("<div id=\"login-logo\"><a href=\"".htmlentities($sIconUrl, ENT_QUOTES, 'UTF-8')."\"><img title=\"$sVersionShort\" src=\"$sDisplayIcon\"></a></div>\n");
+		$this->add("<div id=\"login-logo\"><a href=\"".htmlentities($sIconUrl, ENT_QUOTES, 'UTF-8')."\"><img title=\"$sVersionShort\" style=\"width:55px; height:55px\" src=\"$sDisplayIcon\"></a></div>\n");
 	}
 
 	public function DisplayLoginForm($sLoginType, $bFailedLogin = false)
@@ -133,7 +133,9 @@ class LoginWebPage extends NiceWebPage
 	
 			$this->DisplayLoginHeader();
 			$this->add("<div id=\"login\">\n");
-			$this->add("<h1>".Dict::S('UI:Login:Welcome')."</h1>\n");
+			//$this->add("<h1>".Dict::S('UI:Login:Welcome')."</h1>\n");
+                        $this->add("<h1> Welcome to Azatec Support </h1>\n");
+
 			if ($bFailedLogin)
 			{
 				if (self::$m_sLoginFailedMessage != '')

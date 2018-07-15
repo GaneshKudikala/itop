@@ -952,10 +952,10 @@ a:visited.ui-button,
 .ui-widget-header .ui-state-focus,
 .ui-button:hover,
 .ui-button:focus {
-	border: 1px solid #E87C1E;
-	background: #fde17c;
+	border: 1px solid #1E3C6A;
+	background: #ffffff;
 	font-weight: bold;
-	color: #E87C1E;
+	color: #1E3C6A;
 }
 .ui-state-hover a,
 .ui-state-hover a:hover,
@@ -980,10 +980,10 @@ a.ui-button:focus {
 a.ui-button:active,
 .ui-button:active,
 .ui-button.ui-state-active:hover {
-	border: 1px solid #E87C1E;
+	border: 1px solid #1E3C6A;
 	background: #ffffff;
 	font-weight: bold;
-	color: #E87C1E;
+	color: #1E3C6A;
 }
 .ui-icon-background,
 .ui-state-active .ui-icon-background {
